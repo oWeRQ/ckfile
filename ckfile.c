@@ -78,24 +78,37 @@ int main(int argc, char **argv) {
         fseek(inFile, 0, SEEK_END);
         size = ftell(inFile);
 
+		// hack: skip dir
+		if (size % 4096 == 0)
+		{
+			fclose(inFile);
+            continue;
+		}
+
         if (size < block_size)
         {
-			if (size % 4096 != 0) // hack: skip dir
-				fprintf(stderr, "error: file size(%ld) smaller than block size: %s\n", size, argv[argfile]);
+			fprintf(stderr, "%ldKiB\t%s\n", size / kByte, argv[argfile]);
             fclose(inFile);
             continue;
         }
 
         blocks = size / block_size;
+        //if (size != 0 && blocks == 0)
+		//	blocks = 1;
+
+		ratio = 100. / blocks;
+		
         null_blocks = 0;
 
 		if (map)
             putchar('\n');
 
-		ratio = 100./blocks;
         for (i = 0; i < blocks; i++) {
             fseek(inFile, i*block_size, SEEK_SET);
             for (j = 0; j < check_bytes; j++) {
+				if (feof(inFile))
+					break;
+				
                 if (getc(inFile) != 0)
                     break;
             }
